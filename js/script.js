@@ -1,5 +1,12 @@
 // EREN.AI — küçük etkileşim betiği
 
+/* ====== İLETİŞİM BİLGİLERİ: BURAYI KENDİNE GÖRE DEĞİŞTİR ====== */
+const CONTACT = {
+  email: "merhaba@eren.ai",
+  whatsapp: "905000000000"   // başında + olmadan, ülke koduyla (örn. 905321234567). Boş bırakırsan WhatsApp butonları gizlenir.
+};
+/* =============================================================== */
+
 document.addEventListener('DOMContentLoaded', () => {
   // Mobil menü aç/kapa
   const toggle = document.querySelector('.nav-toggle');
@@ -18,7 +25,69 @@ document.addEventListener('DOMContentLoaded', () => {
       nav.style.padding = '18px 28px';
       nav.style.gap = '16px';
     });
+    // Mobilde bir bağlantıya tıklayınca menüyü kapat
+    nav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+      if (window.matchMedia('(max-width: 880px)').matches) nav.style.display = 'none';
+    }));
   }
+
+  // Para birimi geçişi (TL / USD)
+  document.querySelectorAll('.cur-toggle button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.cur-toggle button').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      const key = btn.dataset.cur; // "try" veya "usd"
+      document.querySelectorAll('[data-try]').forEach(el => { el.textContent = el.dataset[key]; });
+    });
+  });
+
+  // Paket butonuna basınca formda ilgili hizmeti seç
+  const planSelect = document.getElementById('f-plan');
+  document.querySelectorAll('[data-plan]').forEach(a => {
+    a.addEventListener('click', () => {
+      if (planSelect) planSelect.selectedIndex = Number(a.dataset.plan);
+    });
+  });
+
+  // İletişim bağlantıları
+  const hasWa = /^\d{10,15}$/.test(CONTACT.whatsapp) && !/^9050000000/.test(CONTACT.whatsapp);
+  const mailText = document.getElementById('mailText');
+  const mailLink = document.getElementById('mailLink');
+  const waLink = document.getElementById('waLink');
+  const sendWa = document.getElementById('sendWa');
+  const sendMail = document.getElementById('sendMail');
+  if (mailText) mailText.textContent = CONTACT.email;
+  if (mailLink) mailLink.href = 'mailto:' + CONTACT.email;
+  if (hasWa) {
+    if (waLink) { waLink.href = 'https://wa.me/' + CONTACT.whatsapp; waLink.hidden = false; }
+    if (sendWa) sendWa.hidden = false;
+  }
+
+  // Teklif formu: mesajı WhatsApp'ta veya e-postada hazır aç
+  function buildMessage() {
+    const name = document.getElementById('f-name').value.trim();
+    const biz = document.getElementById('f-biz').value.trim();
+    const plan = document.getElementById('f-plan').value;
+    const msg = document.getElementById('f-msg').value.trim();
+    const hint = document.getElementById('formHint');
+    if (!name || !msg) {
+      hint.textContent = 'Lütfen adını ve proje açıklamasını doldur.';
+      hint.classList.add('err');
+      return null;
+    }
+    hint.classList.remove('err');
+    return 'Merhaba, web sitenizden yazıyorum.\n\nAd: ' + name +
+      (biz ? '\nİşletme: ' + biz : '') +
+      '\nHizmet: ' + plan + '\n\n' + msg;
+  }
+  if (sendMail) sendMail.addEventListener('click', () => {
+    const t = buildMessage(); if (!t) return;
+    location.href = 'mailto:' + CONTACT.email + '?subject=' + encodeURIComponent('Proje Talebi') + '&body=' + encodeURIComponent(t);
+  });
+  if (sendWa) sendWa.addEventListener('click', () => {
+    const t = buildMessage(); if (!t) return;
+    window.open('https://wa.me/' + CONTACT.whatsapp + '?text=' + encodeURIComponent(t), '_blank', 'noopener');
+  });
 
   /*
    * ============================================================
